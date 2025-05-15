@@ -65,7 +65,7 @@ class JoinGroupScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    // Handle join logic
+                    Navigator.pushReplacementNamed(context, '/maingroup');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFFB703),
