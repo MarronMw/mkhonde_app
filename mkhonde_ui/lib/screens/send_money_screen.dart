@@ -12,18 +12,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Select Payment Option',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        backgroundColor: Color(0xFF83C5BE),
 
-
-      ),
       backgroundColor: Color(0xFFE7F0EE),
       body: Container(
         width: double.infinity,

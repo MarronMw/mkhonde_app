@@ -6,6 +6,14 @@ class LanguageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text('Welcome To Mkhonde Wallet',
+        style: TextStyle(
+            color: Colors.white,
+        ),),
+        backgroundColor: const Color(0xFF83C5BE),
+      ),
       body: Container(
         width: double.infinity,
         height: double.infinity,
