@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 
-class LanguageScreen extends StatelessWidget {
+class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
+
+  @override
+  State<LanguageScreen> createState() => _LanguageScreenState();
+}
+
+class _LanguageScreenState extends State<LanguageScreen> {
+  final List<String> _languages = ['English', 'Chichewa', 'Tumbuka', 'Yao'];
+  String _selectedLanguage = 'English';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text('Welcome To Mkhonde Wallet',
-        style: TextStyle(
-            color: Colors.white,
-        ),),
-        backgroundColor: const Color(0xFF83C5BE),
-      ),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -26,20 +26,11 @@ class LanguageScreen extends StatelessWidget {
         ),
         child: Center(
           child: Container(
-            // width: 400,
-            // padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.0), // transparent for visual clarity
-              // borderRadius: BorderRadius.circular(16),
-              boxShadow: [
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
 
-              ],
-            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 12),
-                const SizedBox(height: 40),
                 const Text(
                   'Select Your Language',
                   style: TextStyle(
@@ -48,33 +39,50 @@ class LanguageScreen extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 40),
-                Column(
-                  children: ['English', 'Chichewa', 'Tumbuka', 'Yao']
-                      .map(
-                        (lang) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16, left: 20, right: 20),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFB703),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 4,
+                const SizedBox(height: 30),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 123),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedLanguage,
+                      items: _languages
+                          .map(
+                            (lang) => DropdownMenuItem<String>(
+                          value: lang,
+                          child: Text(lang),
                         ),
-                        onPressed: () {
-                          Navigator.pushReplacementNamed(context, '/group');
-                        },
-                        child: Text(
-                          lang,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ),
+                      )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedLanguage = value!;
+                        });
+                      },
                     ),
-                  )
-                      .toList(),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFB703),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 4,
+                  ),
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/group');
+                  },
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 const Text(
