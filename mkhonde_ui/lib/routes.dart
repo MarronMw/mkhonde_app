@@ -9,5 +9,5 @@ Map<String, WidgetBuilder> appRoutes = {
   '/': (context) => const LanguageScreen(),
   '/group': (context) => const GroupSectionScreen(),
   '/join': (context) => const JoinGroupScreen(),
-  '/maingroup': (context) => const GroupHomeScreen(),
+  '/maingroup': (context) => GroupHomeScreen(),
 };
