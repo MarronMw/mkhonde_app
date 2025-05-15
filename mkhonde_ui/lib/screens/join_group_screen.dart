@@ -7,6 +7,24 @@ class JoinGroupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: const Color(0xFF006D77),
+        //  Back button
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context); // Navigate back
+          },
+        ),
+        title: const Text(
+          'Join Group',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
       backgroundColor: const Color(0xFFF0F4F3),
       body: Container(
         width: double.infinity,
@@ -20,28 +38,17 @@ class JoinGroupScreen extends StatelessWidget {
         ),
         child: Center(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-            margin: const EdgeInsets.only(top: 60, bottom: 40),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+            margin: const EdgeInsets.only(top: 0, bottom: 40),
             width: 360,
             decoration: BoxDecoration(
-
               borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-
-              ],
+              boxShadow: const [],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Join Group',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 24),
+
 
                 // Name input
                 _buildInputField(
@@ -62,10 +69,12 @@ class JoinGroupScreen extends StatelessWidget {
                   hintText: 'Group Code',
                 ),
 
-                const SizedBox(height: 16),
+
+
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/maingroup');
+                    // Normal push so user can come back if needed
+                    Navigator.pushNamed(context, '/maingroup');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFFB703),
@@ -77,10 +86,12 @@ class JoinGroupScreen extends StatelessWidget {
                   child: const Text(
                     'Join',
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16),
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
+                const SizedBox(height: 350),
               ],
             ),
           ),

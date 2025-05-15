@@ -88,7 +88,7 @@ class GroupSectionScreen extends StatelessWidget {
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () {
-              Navigator.pushReplacementNamed(context, '/join');
+              Navigator.pushNamed(context, '/join');
             },
             icon: const FaIcon(FontAwesomeIcons.plus),
             label: const Text('Join Group'),
