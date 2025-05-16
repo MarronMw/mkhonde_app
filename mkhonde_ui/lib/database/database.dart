@@ -58,6 +58,72 @@ class AppDatabase {
         FOREIGN KEY(groupId) REFERENCES groups(id)
       )
     ''');
+    await db.execute('''
+    CREATE TABLE group_rules(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      groupId INTEGER NOT NULL,
+      contributionAmount REAL NOT NULL,
+      contributionFrequency INTEGER NOT NULL, -- in months
+      penaltyAmount REAL,
+      penaltyFrequency INTEGER, -- in days
+      maxActiveLoans INTEGER DEFAULT 1,
+      createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(groupId) REFERENCES groups(id)
+    )
+  ''');
+
+    await db.execute('''
+    CREATE TABLE contributions(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER NOT NULL,
+      groupId INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      date TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(userId) REFERENCES users(id),
+      FOREIGN KEY(groupId) REFERENCES groups(id)
+    )
+  ''');
+
+    await db.execute('''
+    CREATE TABLE loans(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER NOT NULL,
+      groupId INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      interestRate REAL NOT NULL,
+      status TEXT NOT NULL, -- pending, approved, rejected, paid
+      dateApproved TEXT,
+      dueDate TEXT,
+      amountPaid REAL DEFAULT 0,
+      FOREIGN KEY(userId) REFERENCES users(id),
+      FOREIGN KEY(groupId) REFERENCES groups(id)
+    )
+  ''');
+
+    await db.execute('''
+    CREATE TABLE loan_payments(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      loanId INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      date TEXT DEFAULT CURRENT_TIMESTAMP,
+      isPenalty INTEGER DEFAULT 0,
+      FOREIGN KEY(loanId) REFERENCES loans(id)
+    )
+  ''');
+
+    await db.execute('''
+    CREATE TABLE penalties(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER NOT NULL,
+      groupId INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      reason TEXT NOT NULL,
+      date TEXT DEFAULT CURRENT_TIMESTAMP,
+      isPaid INTEGER DEFAULT 0,
+      FOREIGN KEY(userId) REFERENCES users(id),
+      FOREIGN KEY(groupId) REFERENCES groups(id)
+    )
+  ''');
   }
 
   // User CRUD operations
@@ -140,6 +206,242 @@ class AppDatabase {
     WHERE user_groups.userId = ?
   ''', [userId]);
   }
+  // Group rules methods
+  Future<Map<String, dynamic>?> getGroupRules(int groupId) async {
+    final db = await database;
+    final result = await db.query(
+      'group_rules',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  Future<int> setGroupRules({
+    required int groupId,
+    required double contributionAmount,
+    required int contributionFrequency,
+    double? penaltyAmount,
+    int? penaltyFrequency,
+    int maxActiveLoans = 1,
+  }) async {
+    final db = await database;
+
+    // Check if rules exist
+    final existingRules = await getGroupRules(groupId);
+
+    if (existingRules != null) {
+      return await db.update(
+        'group_rules',
+        {
+          'contributionAmount': contributionAmount,
+          'contributionFrequency': contributionFrequency,
+          'penaltyAmount': penaltyAmount,
+          'penaltyFrequency': penaltyFrequency,
+          'maxActiveLoans': maxActiveLoans,
+        },
+        where: 'groupId = ?',
+        whereArgs: [groupId],
+      );
+    } else {
+      return await db.insert('group_rules', {
+        'groupId': groupId,
+        'contributionAmount': contributionAmount,
+        'contributionFrequency': contributionFrequency,
+        'penaltyAmount': penaltyAmount,
+        'penaltyFrequency': penaltyFrequency,
+        'maxActiveLoans': maxActiveLoans,
+      });
+    }
+  }
+
+  Future<Map<String, dynamic>?> getGroupById(int groupId) async {
+    final db = await database;
+    final result = await db.query(
+      'groups',
+      where: 'id = ?',
+      whereArgs: [groupId],
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+// Contribution methods
+  Future<int> recordContribution({
+    required int userId,
+    required int groupId,
+    required double amount,
+  }) async {
+    final db = await database;
+    return await db.insert('contributions', {
+      'userId': userId,
+      'groupId': groupId,
+      'amount': amount,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getGroupContributions(int groupId) async {
+    final db = await database;
+    return await db.query(
+      'contributions',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+      orderBy: 'date DESC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getUserContributions(int userId, int groupId) async {
+    final db = await database;
+    return await db.query(
+      'contributions',
+      where: 'userId = ? AND groupId = ?',
+      whereArgs: [userId, groupId],
+    );
+  }
+
+// Loan methods
+  Future<int> createLoan({
+    required int userId,
+    required int groupId,
+    required double amount,
+    required double interestRate,
+    required int repaymentMonths,
+  }) async {
+    final db = await database;
+
+    final dueDate = DateTime.now().add(Duration(days: 30 * repaymentMonths)).toIso8601String();
+
+    return await db.insert('loans', {
+      'userId': userId,
+      'groupId': groupId,
+      'amount': amount,
+      'interestRate': interestRate,
+      'status': 'pending',
+      'dueDate': dueDate,
+    });
+  }
+
+  Future<int> approveLoan(int loanId) async {
+    final db = await database;
+    return await db.update(
+      'loans',
+      {
+        'status': 'approved',
+        'dateApproved': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [loanId],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getGroupLoans(int groupId) async {
+    final db = await database;
+    return await db.query(
+      'loans',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+      orderBy: 'dateApproved DESC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getUserLoans(int userId) async {
+    final db = await database;
+    return await db.query(
+      'loans',
+      where: 'userId = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  Future<int> recordLoanPayment({
+    required int loanId,
+    required double amount,
+    bool isPenalty = false,
+  }) async {
+    final db = await database;
+
+    // Record payment
+    await db.insert('loan_payments', {
+      'loanId': loanId,
+      'amount': amount,
+      'isPenalty': isPenalty ? 1 : 0,
+    });
+
+    // Update loan amount paid
+    final payments = await db.query(
+      'loan_payments',
+      where: 'loanId = ?',
+      whereArgs: [loanId],
+    );
+
+    final totalPaid = payments.fold<double>(0.0, (sum, payment) {
+      final amount = payment['amount'];
+      return sum + (amount is num ? amount.toDouble() : 0.0);
+    });
+
+    final loan = (await db.query('loans', where: 'id = ?', whereArgs: [loanId])).first;
+    final loanAmount = loan['amount'];
+    final amountValue = loanAmount is num ? loanAmount.toDouble() : 0.0;
+
+    final status = totalPaid >= amountValue ? 'paid' : 'approved';
+
+    return await db.update(
+      'loans',
+      {
+        'amountPaid': totalPaid,
+        'status': status,
+      },
+      where: 'id = ?',
+      whereArgs: [loanId],
+    );
+
+  }
+
+// Penalty methods
+  Future<int> recordPenalty({
+    required int userId,
+    required int groupId,
+    required double amount,
+    required String reason,
+  }) async {
+    final db = await database;
+    return await db.insert('penalties', {
+      'userId': userId,
+      'groupId': groupId,
+      'amount': amount,
+      'reason': reason,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getGroupPenalties(int groupId) async {
+    final db = await database;
+    return await db.query(
+      'penalties',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+      orderBy: 'date DESC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getUserPenalties(int userId, int groupId) async {
+    final db = await database;
+    return await db.query(
+      'penalties',
+      where: 'userId = ? AND groupId = ?',
+      whereArgs: [userId, groupId],
+    );
+  }
+
+  // Add to AppDatabase class
+  Future<int> recordPenaltyPayment({required int penaltyId}) async {
+    final db = await database;
+    return await db.update(
+      'penalties',
+      {'isPaid': 1},
+      where: 'id = ?',
+      whereArgs: [penaltyId],
+    );
+  }
+
 
 }
 

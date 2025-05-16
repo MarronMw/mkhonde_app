@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mkhonde_ui/database/database.dart';
 import 'package:mkhonde_ui/providers/auth_provider.dart';
+import 'package:mkhonde_ui/providers/group_management_provider.dart';
 import 'package:mkhonde_ui/providers/group_provider.dart';
 import 'package:provider/provider.dart';
 import 'routes.dart';
@@ -16,6 +17,9 @@ void main() async {
       ),
       ChangeNotifierProvider(
         create: (context) => GroupProvider(database),
+      ),
+      ChangeNotifierProvider(
+        create: (context) => GroupManagementProvider(database),
       ),
     ],
     child: const MyGroupApp(),

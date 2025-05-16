@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/group_provider.dart';
+import 'group_home_screen.dart';
 
 class GroupSectionScreen extends StatefulWidget {
   const GroupSectionScreen({super.key});
@@ -228,29 +229,39 @@ class _GroupSectionScreenState extends State<GroupSectionScreen> {
   }
 
   Widget _buildGroupItem(Map<String, dynamic> group) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2)],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              const FaIcon(FontAwesomeIcons.users, color: Color(0xFF006D77), size: 20),
-              const SizedBox(width: 12),
-              Text(
-                group['name'].toString().toUpperCase(),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF4A4A4A)),
-              ),
-            ],
+    return GestureDetector(
+      onTap:  () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GroupHomeScreen(groupId: group['id']),
           ),
-          const FaIcon(FontAwesomeIcons.chevronRight, size: 18, color: Color(0xFF999999)),
-        ],
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2)],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const FaIcon(FontAwesomeIcons.users, color: Color(0xFF006D77), size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  group['name'].toString().toUpperCase(),
+                  style: const TextStyle(fontSize: 14, color: Color(0xFF4A4A4A)),
+                ),
+              ],
+            ),
+            const FaIcon(FontAwesomeIcons.chevronRight, size: 18, color: Color(0xFF999999)),
+          ],
+        ),
       ),
     );
   }
