@@ -204,6 +204,36 @@ class GroupManagementProvider with ChangeNotifier {
     }
   }
 
+  // Add to GroupManagementProvider
+  List<Map<String, dynamic>> _groupMembers = [];
+  List<Map<String, dynamic>> get groupMembers => _groupMembers;
+
+  Future<void> loadGroupMembers(int groupId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _groupMembers = await _database.getGroupMembers(groupId);
+
+      // Load additional member stats
+      for (var member in _groupMembers) {
+        final contributions = await _database.getUserContributionsSummary(member['id'], groupId);
+        final loans = await _database.getUserLoansSummary(member['id'], groupId);
+
+        member['totalContributed'] = contributions.first['totalContributed'] ?? 0;
+        member['contributionCount'] = contributions.first['contributionCount'] ?? 0;
+        member['totalBorrowed'] = loans.first['totalBorrowed'] ?? 0;
+        member['totalRepaid'] = loans.first['totalRepaid'] ?? 0;
+        member['loanCount'] = loans.first['loanCount'] ?? 0;
+      }
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> recordLoanPayment({
     required int loanId,
     required double amount,

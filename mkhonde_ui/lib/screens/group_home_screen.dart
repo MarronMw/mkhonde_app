@@ -416,13 +416,31 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
     );
   }
 
-  void _showGroupMembers(
-      BuildContext context, GroupManagementProvider provider) {
+  void _showGroupMembers(BuildContext context, GroupManagementProvider provider) {
+    // Load members if not already loaded and groupId is not null
+    if (provider.groupMembers.isEmpty && widget.groupId != null) {
+      provider.loadGroupMembers(widget.groupId!);
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Group Members'),
-        content: const Text('Member list would appear here'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: provider.isLoading && provider.groupMembers.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : provider.groupMembers.isEmpty
+              ? const Center(child: Text('No members found'))
+              : ListView.builder(
+            shrinkWrap: true,
+            itemCount: provider.groupMembers.length,
+            itemBuilder: (context, index) {
+              final member = provider.groupMembers[index];
+              return _buildMemberCard(member);
+            },
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -430,6 +448,66 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMemberCard(Map<String, dynamic> member) {
+    // Provide default values for nullable doubles
+    final totalContributed = (member['totalContributed'] as num?)?.toDouble() ?? 0.0;
+    final totalBorrowed = (member['totalBorrowed'] as num?)?.toDouble() ?? 0.0;
+    final totalRepaid = (member['totalRepaid'] as num?)?.toDouble() ?? 0.0;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              member['name']?.toString() ?? 'Unknown',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Phone: ${member['phone']?.toString() ?? 'N/A'}',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildMemberStat('Contributions', member['contributionCount'], totalContributed),
+                _buildMemberStat('Loans', member['loanCount'], totalBorrowed),
+                _buildMemberStat('Repaid', null, totalRepaid),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMemberStat(String label, int? count, double amount) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        if (count != null)
+          Text(
+            '$count',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        Text(
+          'MWK ${amount.toStringAsFixed(2)}',
+          style: const TextStyle(fontSize: 12),
+        ),
+      ],
     );
   }
 }

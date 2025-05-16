@@ -441,7 +441,40 @@ class AppDatabase {
       whereArgs: [penaltyId],
     );
   }
+// Add to AppDatabase class
+  Future<List<Map<String, dynamic>>> getGroupMembers(int groupId) async {
+    final db = await database;
+    return await db.rawQuery('''
+    SELECT users.id, users.name, users.phone 
+    FROM users
+    JOIN user_groups ON users.id = user_groups.userId
+    WHERE user_groups.groupId = ?
+    ORDER BY users.name ASC
+  ''', [groupId]);
+  }
 
+  Future<List<Map<String, dynamic>>> getUserContributionsSummary(int userId, int groupId) async {
+    final db = await database;
+    return await db.rawQuery('''
+    SELECT 
+      SUM(amount) as totalContributed,
+      COUNT(*) as contributionCount
+    FROM contributions
+    WHERE userId = ? AND groupId = ?
+  ''', [userId, groupId]);
+  }
+
+  Future<List<Map<String, dynamic>>> getUserLoansSummary(int userId, int groupId) async {
+    final db = await database;
+    return await db.rawQuery('''
+    SELECT 
+      SUM(amount) as totalBorrowed,
+      SUM(amountPaid) as totalRepaid,
+      COUNT(*) as loanCount
+    FROM loans
+    WHERE userId = ? AND groupId = ?
+  ''', [userId, groupId]);
+  }
 
 }
 
