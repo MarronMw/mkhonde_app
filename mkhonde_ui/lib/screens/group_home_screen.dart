@@ -78,9 +78,9 @@ class GroupHomeScreen extends StatelessWidget {
   Widget _buildFeatureButtonsGrid(BuildContext context) {
     final features = [
       {'icon': FontAwesomeIcons.paperPlane, 'label': 'Send Money'},
-      {'icon': FontAwesomeIcons.handHoldingUsd, 'label': 'Withdraw'},
+      {'icon': FontAwesomeIcons.handHoldingDollar, 'label': 'Withdraw'},
       {'icon': FontAwesomeIcons.receipt, 'label': 'Transactions'},
-      {'icon': FontAwesomeIcons.usersCog, 'label': 'Group Details'},
+      {'icon': FontAwesomeIcons.usersGear, 'label': 'Group Details'},
     ];
 
     return GridView.builder(
