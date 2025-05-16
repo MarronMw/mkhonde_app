@@ -1,11 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/group_provider.dart';
 
-class GroupSectionScreen extends StatelessWidget {
+class GroupSectionScreen extends StatefulWidget {
   const GroupSectionScreen({super.key});
 
   @override
+  State<GroupSectionScreen> createState() => _GroupSectionScreenState();
+}
+
+class _GroupSectionScreenState extends State<GroupSectionScreen> {
+  final _groupNameController = TextEditingController();
+  final _groupCodeController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final groupProvider = Provider.of<GroupProvider>(context, listen: false);
+      groupProvider.loadUserGroups(authProvider.currentUser!['id']);
+    });
+  }
+
+  @override
+  void dispose() {
+    _groupNameController.dispose();
+    _groupCodeController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final groupProvider = context.watch<GroupProvider>();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4F3),
       body: Container(
@@ -39,7 +69,7 @@ class GroupSectionScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _buildInputField(),
+                _buildGroupInput(),
                 const SizedBox(height: 24),
                 _buildButtonsRow(context),
                 const SizedBox(height: 16),
@@ -52,7 +82,7 @@ class GroupSectionScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _buildGroupList(),
+                _buildGroupList(groupProvider),
               ],
             ),
           ),
@@ -61,7 +91,7 @@ class GroupSectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInputField() {
+  Widget _buildGroupInput() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -69,12 +99,13 @@ class GroupSectionScreen extends StatelessWidget {
         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2)],
       ),
       child: TextField(
+        controller: _groupCodeController,
         decoration: InputDecoration(
           prefixIcon: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: FaIcon(FontAwesomeIcons.idBadge, color: Colors.grey[600]),
           ),
-          hintText: 'Enter Group',
+          hintText: 'Enter Group Code',
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
         ),
@@ -83,12 +114,15 @@ class GroupSectionScreen extends StatelessWidget {
   }
 
   Widget _buildButtonsRow(BuildContext context) {
+    final groupProvider = Provider.of<GroupProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
     return Row(
       children: [
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () {
-              Navigator.pushReplacementNamed(context, '/join');
+              Navigator.pushNamed(context, '/join');
             },
             icon: const FaIcon(FontAwesomeIcons.plus),
             label: const Text('Join Group'),
@@ -104,9 +138,7 @@ class GroupSectionScreen extends StatelessWidget {
         const SizedBox(width: 16),
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () {
-              // Placeholder for create group action
-            },
+            onPressed: () => _showCreateGroupDialog(context, authProvider, groupProvider),
             icon: const FaIcon(FontAwesomeIcons.plus),
             label: const Text('Create Group'),
             style: ElevatedButton.styleFrom(
@@ -122,15 +154,80 @@ class GroupSectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGroupList() {
-    final groups = ['Anzathu', 'Banja', 'Abwenzi', 'Akatswiri', 'Moyo'];
+  void _showCreateGroupDialog(BuildContext context, AuthProvider authProvider, GroupProvider groupProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Create New Group'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _groupNameController,
+              decoration: const InputDecoration(
+                labelText: 'Group Name',
+                hintText: 'e.g. Anzathu',
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _groupCodeController,
+              decoration: const InputDecoration(
+                labelText: 'Group Code',
+                hintText: 'Unique code for members to join',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_groupNameController.text.isNotEmpty &&
+                  _groupCodeController.text.isNotEmpty) {
+                Navigator.pop(context);
+                final success = await groupProvider.createGroup(
+                  userId: authProvider.currentUser!['id'],
+                  name: _groupNameController.text,
+                  code: _groupCodeController.text,
+                );
 
-    return Column(
-      children: groups.map((name) => _buildGroupItem(name)).toList(),
+                if (success && mounted) {
+                  Navigator.pushReplacementNamed(context, '/maingroup');
+                }
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildGroupItem(String name) {
+  Widget _buildGroupList(GroupProvider groupProvider) {
+    if (groupProvider.isLoading && groupProvider.userGroups.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (groupProvider.userGroups.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Text(
+          'You are not in any groups yet',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
+
+    return Column(
+      children: groupProvider.userGroups.map((group) => _buildGroupItem(group)).toList(),
+    );
+  }
+
+  Widget _buildGroupItem(Map<String, dynamic> group) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -147,7 +244,7 @@ class GroupSectionScreen extends StatelessWidget {
               const FaIcon(FontAwesomeIcons.users, color: Color(0xFF006D77), size: 20),
               const SizedBox(width: 12),
               Text(
-                name.toUpperCase(),
+                group['name'].toString().toUpperCase(),
                 style: const TextStyle(fontSize: 14, color: Color(0xFF4A4A4A)),
               ),
             ],
